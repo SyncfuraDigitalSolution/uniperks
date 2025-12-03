@@ -6,6 +6,7 @@ import 'package:uniperks/pages/cart_page.dart';
 import 'package:uniperks/pages/quiz_page.dart';
 import 'package:uniperks/pages/voucher_page.dart';
 import 'package:uniperks/pages/profile_page.dart';
+import 'package:uniperks/pages/order_tracking_page.dart';
 import 'package:uniperks/services/cart_service.dart';
 import 'package:uniperks/services/user_coins_service.dart';
 import 'package:uniperks/services/product_service.dart';
@@ -26,7 +27,7 @@ class _UserDashboardState extends State<UserDashboard> {
   late Future<int> _coinsFuture;
   late Future<int> _cartFuture;
   // Reload counters to force remount of each tab when refreshed
-  final List<int> _reloadCounters = [0, 0, 0, 0, 0];
+  final List<int> _reloadCounters = [0, 0, 0, 0, 0, 0];
   bool _coinsCartLoaded = false;
 
   @override
@@ -593,6 +594,10 @@ class _UserDashboardState extends State<UserDashboard> {
         key: ValueKey('voucher-${_reloadCounters[4]}'),
         username: widget.username,
       ), // Index 4 - Vouchers
+      KeyedSubtree(
+        key: ValueKey('orders-${_reloadCounters[5]}'),
+        child: OrderTrackingPage(username: widget.username),
+      ), // Index 5 - Orders
     ];
 
     return Scaffold(
@@ -756,6 +761,10 @@ class _UserDashboardState extends State<UserDashboard> {
           BottomNavigationBarItem(
             icon: Icon(Icons.card_giftcard),
             label: 'Vouchers',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long),
+            label: 'Orders',
           ),
         ],
       ),

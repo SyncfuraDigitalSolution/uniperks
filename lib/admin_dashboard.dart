@@ -12,6 +12,7 @@ import 'package:uniperks/models/voucher.dart';
 import 'package:uniperks/models/quiz_question.dart';
 import 'package:uniperks/models/quiz_module.dart';
 import 'package:uniperks/models/order.dart';
+import 'package:uniperks/models/order_item.dart';
 import 'package:uniperks/services/analytics_service.dart';
 import 'package:uniperks/services/order_service.dart';
 
@@ -28,12 +29,14 @@ class _AdminDashboardState extends State<AdminDashboard>
   List<Map<String, dynamic>> registeredUsers = [];
   bool isLoading = true;
   late final TabController _tabController;
+  late Future<List<Order>> _ordersFuture;
 
   @override
   void initState() {
     super.initState();
     _loadUsers();
     _tabController = TabController(length: 6, vsync: this);
+    _ordersFuture = OrderService.getAllOrders();
   }
 
   Future<void> _loadUsers() async {
@@ -55,6 +58,12 @@ class _AdminDashboardState extends State<AdminDashboard>
         isLoading = false;
       });
     }
+  }
+
+  void _refreshOrders() {
+    setState(() {
+      _ordersFuture = OrderService.getAllOrders();
+    });
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -221,7 +230,7 @@ class _AdminDashboardState extends State<AdminDashboard>
               padding: EdgeInsets.zero,
               labelPadding: const EdgeInsets.symmetric(horizontal: 12),
               tabs: const [
-                Tab(icon: Icon(Icons.dashboard), text: 'Overview'),
+                Tab(icon: Icon(Icons.receipt_long), text: 'Orders'),
                 Tab(icon: Icon(Icons.analytics), text: 'Analytics'),
                 Tab(icon: Icon(Icons.people), text: 'Users'),
                 Tab(icon: Icon(Icons.quiz), text: 'Quiz'),
@@ -233,7 +242,7 @@ class _AdminDashboardState extends State<AdminDashboard>
           body: TabBarView(
             controller: _tabController,
             children: [
-              _buildOverviewTab(),
+              _buildOrdersTab(),
               _buildAnalyticsTab(),
               _buildUsersTab(),
               _buildQuizTab(),
@@ -246,117 +255,253 @@ class _AdminDashboardState extends State<AdminDashboard>
     );
   }
 
-  Widget _buildOverviewTab() {
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([
-        ProductService.getAllProducts(),
-        AnalyticsService.getTotalOrders(),
-        AnalyticsService.getTotalRevenue(),
-        AnalyticsService.getAverageOrderValue(),
-      ]),
+  Widget _buildOrdersTab() {
+    return FutureBuilder<List<Order>>(
+      future: OrderService.getAllOrders(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
-        final totalProducts = (snapshot.data?[0] as List<Product>?) ?? [];
-        final totalOrders = (snapshot.data?[1] as int?) ?? 0;
-        final totalRevenue = (snapshot.data?[2] as double?) ?? 0.0;
-        final avgOrderValue = (snapshot.data?[3] as double?) ?? 0.0;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                'System Statistics',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              Row(
+        final orders = snapshot.data ?? [];
+        if (orders.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total Orders',
-                      '$totalOrders',
-                      Icons.shopping_cart,
-                      Colors.blue,
-                    ),
+                  Icon(Icons.receipt_long, size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No orders yet',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total Revenue',
-                      'RM${totalRevenue.toStringAsFixed(0)}',
-                      Icons.attach_money,
-                      Colors.green,
-                    ),
-                  ),
+                  const SizedBox(height: 8),
+                  const Text('New orders will appear here for review'),
                 ],
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total Users',
-                      '${registeredUsers.length}',
-                      Icons.people,
-                      Colors.orange,
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: orders.length,
+          itemBuilder: (context, i) {
+            final o = orders[i];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.grey[200]!),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: FutureBuilder<List<OrderItem>>(
+                            future: OrderService.getOrderItems(o.id),
+                            builder: (context, itemsSnap) {
+                              final names = (itemsSnap.data ?? [])
+                                  .map((it) => it.productName)
+                                  .where((n) => n != null && n.isNotEmpty)
+                                  .join(', ');
+                              final title = names.isNotEmpty ? names : 'Order';
+                              return Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildStatusChip(o.status),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Avg Order',
-                      'RM${avgOrderValue.toStringAsFixed(0)}',
-                      Icons.trending_up,
-                      Colors.purple,
+                    const SizedBox(height: 8),
+                    Text('Customer: ${o.username}'),
+                    const SizedBox(height: 4),
+                    Text('Total: RM${o.totalAmount.toStringAsFixed(2)}'),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.local_shipping, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          o.deliveryMethod == 'delivery'
+                              ? 'Delivery'
+                              : 'Self pickup',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Products Available: ${totalProducts.length}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Quick Actions',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '📚 Quiz Management',
-                        style: Theme.of(context).textTheme.titleMedium,
+                    const SizedBox(height: 8),
+                    if (o.deliveryMethod == 'delivery')
+                      FutureBuilder<Map<String, dynamic>?>(
+                        future: UserService.getUserProfile(o.username),
+                        builder: (context, snap) {
+                          final profile = snap.data;
+                          if (snap.connectionState == ConnectionState.waiting) {
+                            return const Text('Loading address...');
+                          }
+                          final address =
+                              [
+                                    profile?['address_line'],
+                                    profile?['city'],
+                                    profile?['postal_code'],
+                                  ]
+                                  .where(
+                                    (e) => (e as String?)?.isNotEmpty == true,
+                                  )
+                                  .join(', ');
+                          final phone = profile?['phone'] as String?;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                address.isNotEmpty
+                                    ? 'Address: $address'
+                                    : 'Address: (not provided)',
+                              ),
+                              if (phone != null && phone.isNotEmpty)
+                                Text('Phone: $phone'),
+                            ],
+                          );
+                        },
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Manage quiz modules, add/edit/delete questions, and track question statistics.',
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Go to the "Quiz Management" tab to manage questions.',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
-                  ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (o.status == 'paid') ...[
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              await OrderService.updateOrderStatus(
+                                o.id,
+                                'accepted',
+                              );
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.check),
+                            label: const Text('Accept'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              await OrderService.updateOrderStatus(
+                                o.id,
+                                'declined',
+                              );
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.close, color: Colors.red),
+                            label: const Text('Decline'),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.red),
+                              foregroundColor: Colors.red,
+                            ),
+                          ),
+                        ],
+                        if (o.deliveryMethod == 'delivery' &&
+                            o.status == 'accepted')
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              await OrderService.updateOrderStatus(
+                                o.id,
+                                'on_the_way',
+                              );
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.local_shipping),
+                            label: const Text('Mark On The Way'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        if (o.deliveryMethod == 'delivery' &&
+                            o.status == 'on_the_way')
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              await OrderService.updateOrderStatus(
+                                o.id,
+                                'delivered',
+                              );
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.check_circle),
+                            label: const Text('Mark Delivered'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildStatusChip(String status) {
+    Color bg;
+    Color fg;
+    String label;
+    switch (status) {
+      case 'accepted':
+        bg = Colors.green.withOpacity(0.1);
+        fg = Colors.green;
+        label = 'Accepted';
+        break;
+      case 'on_the_way':
+        bg = Colors.orange.withOpacity(0.1);
+        fg = Colors.orange;
+        label = 'On the Way';
+        break;
+      case 'delivered':
+        bg = Colors.teal.withOpacity(0.1);
+        fg = Colors.teal;
+        label = 'Delivered';
+        break;
+      case 'declined':
+        bg = Colors.red.withOpacity(0.1);
+        fg = Colors.red;
+        label = 'Declined';
+        break;
+      case 'paid':
+      default:
+        bg = Colors.blue.withOpacity(0.1);
+        fg = Colors.blue;
+        label = 'Paid';
+        break;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: fg, fontWeight: FontWeight.w600),
+      ),
     );
   }
 

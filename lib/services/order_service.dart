@@ -108,6 +108,32 @@ class OrderService {
     }
   }
 
+  static Future<List<Order>> getAllOrders() async {
+    try {
+      final data = await _supabase
+          .from(_ordersTable)
+          .select()
+          .order('created_at', ascending: false);
+      return (data as List).map((j) => Order.fromJson(j)).toList();
+    } catch (e) {
+      print('Get All Orders Error: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> updateOrderStatus(int orderId, String status) async {
+    try {
+      await _supabase
+          .from(_ordersTable)
+          .update({'status': status})
+          .eq('id', orderId);
+      return true;
+    } catch (e) {
+      print('Update Order Status Error: $e');
+      return false;
+    }
+  }
+
   static Future<List<OrderItem>> getOrderItems(int orderId) async {
     try {
       final data = await _supabase

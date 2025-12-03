@@ -3,6 +3,14 @@ import '../models/order.dart';
 
 class AnalyticsService {
   static final _supabase = Supabase.instance.client;
+  static const List<String> _activeStatuses = [
+    'paid',
+    'accepted',
+    'on_the_way',
+    'delivered',
+  ];
+  static String get _activeStatusOrFilter =>
+      'status.eq.paid,status.eq.accepted,status.eq.on_the_way,status.eq.delivered';
 
   // Get total revenue
   static Future<double> getTotalRevenue() async {
@@ -10,7 +18,7 @@ class AnalyticsService {
       final data = await _supabase
           .from('orders')
           .select('total_amount')
-          .eq('status', 'paid');
+          .or(_activeStatusOrFilter);
 
       double total = 0;
       for (var row in data) {
@@ -29,7 +37,7 @@ class AnalyticsService {
       final data = await _supabase
           .from('orders')
           .select('id')
-          .eq('status', 'paid');
+          .or(_activeStatusOrFilter);
       return (data as List).length;
     } catch (e) {
       print('Get Total Orders Error: $e');
@@ -46,7 +54,7 @@ class AnalyticsService {
       final data = await _supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'paid')
+          .or(_activeStatusOrFilter)
           .gte('created_at', startDate.toIso8601String())
           .lte('created_at', endDate.toIso8601String())
           .order('created_at', ascending: true);
@@ -74,7 +82,7 @@ class AnalyticsService {
       final data = await _supabase
           .from('orders')
           .select('username, total_amount')
-          .eq('status', 'paid');
+          .or(_activeStatusOrFilter);
 
       Map<String, double> customerSpending = {};
       for (var row in data) {
@@ -146,7 +154,7 @@ class AnalyticsService {
       final data = await _supabase
           .from('orders')
           .select('delivery_method')
-          .eq('status', 'paid');
+          .or(_activeStatusOrFilter);
 
       Map<String, int> counts = {'Self Pickup': 0, 'Delivery': 0, 'Unknown': 0};
 
@@ -174,7 +182,7 @@ class AnalyticsService {
       final data = await _supabase
           .from('orders')
           .select()
-          .eq('status', 'paid')
+          .or(_activeStatusOrFilter)
           .order('created_at', ascending: false)
           .limit(limit);
 
@@ -192,7 +200,7 @@ class AnalyticsService {
       final data = await _supabase
           .from('orders')
           .select('created_at')
-          .eq('status', 'paid')
+          .or(_activeStatusOrFilter)
           .gte('created_at', sixMonthsAgo.toIso8601String())
           .order('created_at', ascending: true);
 
@@ -216,7 +224,7 @@ class AnalyticsService {
       final data = await _supabase
           .from('orders')
           .select('total_amount')
-          .eq('status', 'paid');
+          .or(_activeStatusOrFilter);
 
       if (data.isEmpty) return 0;
 
@@ -257,7 +265,7 @@ class AnalyticsService {
           .from('orders')
           .select('voucher_id, discount_amount')
           .not('voucher_id', 'is', null)
-          .eq('status', 'paid');
+          .or(_activeStatusOrFilter);
 
       final totalOrders = await getTotalOrders();
       final voucherUsageCount = ordersWithVouchers.length;
