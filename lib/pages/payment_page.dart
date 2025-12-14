@@ -6,6 +6,7 @@ import '../config/payment_config.dart';
 import '../services/user_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 /// Delivery method choices for the checkout flow.
 enum DeliveryMethod { selfPickup, delivery }
@@ -338,6 +339,19 @@ class _PaymentPageState extends State<PaymentPage>
           currency: PaymentConfig.currency,
           username: widget.username,
           description: 'UniPerks purchase by ${widget.username}',
+          billingDetails: BillingDetails(
+            name: _cardNameController.text.isNotEmpty
+                ? _cardNameController.text
+                : widget.username,
+            address: Address(
+              line1: _addressController.text,
+              line2: '',
+              city: _cityController.text,
+              postalCode: _zipController.text,
+              state: '',
+              country: 'MY',
+            ),
+          ),
         );
 
         if (!mounted) return;
@@ -359,9 +373,11 @@ class _PaymentPageState extends State<PaymentPage>
           }
         } else {
           setState(() => _isProcessing = false);
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Payment cancelled')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment not completed. Please try again.'),
+            ),
+          );
         }
       } catch (e) {
         if (!mounted) return;

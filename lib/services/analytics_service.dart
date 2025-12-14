@@ -12,7 +12,7 @@ class AnalyticsService {
   static String get _activeStatusOrFilter =>
       'status.eq.paid,status.eq.accepted,status.eq.on_the_way,status.eq.delivered';
 
-  // Get total revenue
+  // Get total revenue 
   static Future<double> getTotalRevenue() async {
     try {
       final data = await _supabase

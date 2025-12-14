@@ -37,6 +37,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Future<void> _addToCart() async {
+    if (!widget.product.inStock) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This item is out of stock.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
     await CartService.addToCart(
       widget.username,
       widget.product,
@@ -349,23 +360,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _addToCart,
+                  onPressed: widget.product.inStock ? _addToCart : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0066CC),
+                    backgroundColor: widget.product.inStock
+                        ? const Color(0xFF0066CC)
+                        : Colors.grey,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.shopping_cart_outlined, size: 22),
-                      SizedBox(width: 12),
+                      const Icon(Icons.shopping_cart_outlined, size: 22),
+                      const SizedBox(width: 12),
                       Text(
-                        'ADD TO CART',
-                        style: TextStyle(
+                        widget.product.inStock ? 'ADD TO CART' : 'OUT OF STOCK',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,

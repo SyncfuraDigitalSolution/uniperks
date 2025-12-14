@@ -5,13 +5,19 @@ import '../services/product_service.dart';
 import '../services/cart_service.dart';
 import '../widgets/animated_border_textfield.dart';
 import 'product_detail_page.dart';
+import 'cart_page.dart';
 
 /// Animated Product Catalog Page
 /// Features smooth animations, hero transitions, and modern UI
 class AnimatedProductCatalogPage extends StatefulWidget {
   final String username;
+  final VoidCallback? onViewCartRequested;
 
-  const AnimatedProductCatalogPage({super.key, required this.username});
+  const AnimatedProductCatalogPage({
+    super.key,
+    required this.username,
+    this.onViewCartRequested,
+  });
 
   @override
   State<AnimatedProductCatalogPage> createState() =>
@@ -320,8 +326,19 @@ class _AnimatedProductCatalogPageState extends State<AnimatedProductCatalogPage>
                 child: FloatingCartBar(
                   itemCount: _cartItemCount,
                   onTap: () {
-                    // The bottom navigation bar will handle switching to Cart tab
-                    // No navigation needed - user can tap Cart in bottom nav
+                    // Prefer switching to Cart tab in dashboard if callback provided
+                    if (widget.onViewCartRequested != null) {
+                      widget.onViewCartRequested!.call();
+                    } else {
+                      // Fallback: navigate directly to CartPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CartPage(username: widget.username),
+                        ),
+                      ).then((_) => _updateCartCount());
+                    }
                   },
                 ),
               ),
@@ -664,6 +681,37 @@ class _AnimatedProductCardState extends State<AnimatedProductCard> {
                             ),
                           ),
                         ),
+                      if (!widget.product.inStock)
+                        Positioned(
+                          top: 20,
+                          left: 20,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[700],
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'OUT OF STOCK',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -724,6 +772,16 @@ class _AnimatedProductCardState extends State<AnimatedProductCard> {
                                 : Colors.grey[600],
                           ),
                         ),
+                        const SizedBox(width: 6),
+                        if (!widget.product.inStock)
+                          const Text(
+                            'Out of stock',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                       ],
                     ),
                   ],
@@ -768,7 +826,7 @@ class FloatingCartBar extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 width: 40,
@@ -786,24 +844,47 @@ class FloatingCartBar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$itemCount ${itemCount == 1 ? 'Item' : 'Items'}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$itemCount ${itemCount == 1 ? 'Item' : 'Items'}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'in your cart',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.white.withOpacity(0.15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'in your cart',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                ],
+                ),
+                onPressed: () {
+                  // Navigate to Cart page
+                  onTap();
+                },
+                child: const Text(
+                  'View Cart',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
               ),
             ],
           ),

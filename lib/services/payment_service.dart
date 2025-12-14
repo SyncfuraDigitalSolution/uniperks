@@ -71,6 +71,8 @@ class PaymentService {
     required String currency,
     required String username,
     String? description,
+    // Optional billing details to prefill Stripe sheet (non-sensitive)
+    BillingDetails? billingDetails,
   }) async {
     // On web, Stripe PaymentSheet is not supported, so we simulate payment
     // For production web, you'd integrate Stripe Elements or redirect to Stripe Checkout
@@ -120,6 +122,8 @@ class PaymentService {
                 style: ThemeMode.light,
                 // Disable features that consume memory
                 allowsDelayedPaymentMethods: false,
+                // Prefill allowed fields (name/address)
+                billingDetails: billingDetails,
               ),
             )
             .timeout(
@@ -155,16 +159,13 @@ class PaymentService {
           return false;
         }
         print('❌ Stripe Exception during payment: ${e.error.localizedMessage}');
-        throw Exception('Payment failed: ${e.error.localizedMessage}');
+        // Treat as failure; do not proceed
+        return false;
       }
     } catch (e) {
       print('❌ Payment error: $e');
-      print('⚠️  Falling back to simulated payment due to error...');
-      // Fallback: simulate payment for low-memory devices or errors
-      print('💰 Simulated payment: RM${amount.toStringAsFixed(2)}');
-      await Future.delayed(const Duration(seconds: 2));
-      print('✅ Fallback simulated payment completed');
-      return true;
+      // Do not simulate success; keep user on payment step
+      return false;
     }
   }
 }

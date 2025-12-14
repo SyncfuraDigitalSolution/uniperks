@@ -42,9 +42,12 @@ class _AdminProductUploadPageState extends State<AdminProductUploadPage> {
       _discountController.text = product.discount.toString();
       _imageUrlController.text = product.imageUrl;
       _selectedCategory = product.category;
+      _inStock = product.inStock;
     }
     _loadCategories();
   }
+
+  bool _inStock = true;
 
   Future<void> _loadCategories() async {
     final categories = await ProductService.getCategories();
@@ -169,6 +172,7 @@ class _AdminProductUploadPageState extends State<AdminProductUploadPage> {
         imageUrl: imageUrl,
         category: _selectedCategory!,
         discount: discount,
+        inStock: _inStock,
       );
 
       bool success;
@@ -388,6 +392,30 @@ class _AdminProductUploadPageState extends State<AdminProductUploadPage> {
                   label: Text(isEditing ? 'Update Product' : 'Create Product'),
                 ),
               ),
+              const SizedBox(height: 12),
+              // In Stock toggle
+              Row(
+                children: [
+                  const Text(
+                    'Stock Status',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  Switch(
+                    value: _inStock,
+                    activeColor: const Color(0xFF0066CC),
+                    onChanged: (v) => setState(() => _inStock = v),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _inStock ? 'In Stock' : 'Out of Stock',
+                    style: TextStyle(
+                      color: _inStock ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         ),

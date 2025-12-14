@@ -8,6 +8,7 @@ class Product {
   final int discount; // percentage discount
   final double rating;
   final List<Map<String, dynamic>> reviews;
+  final bool inStock;
 
   Product({
     this.id,
@@ -19,6 +20,7 @@ class Product {
     this.discount = 0,
     this.rating = 0.0,
     this.reviews = const [],
+    this.inStock = true,
   });
 
   double get discountedPrice => price * (1 - discount / 100);
@@ -34,6 +36,7 @@ class Product {
       'category': category,
       'discount': discount,
       'rating': rating,
+      'in_stock': inStock,
       // 'reviews' is an in-memory field only; not stored in DB by default
     };
   }
@@ -47,6 +50,7 @@ class Product {
       'image_url': imageUrl,
       'category': category,
       'discount': discount,
+      'in_stock': inStock,
       // Exclude 'reviews' from DB updates
     };
   }
@@ -63,6 +67,7 @@ class Product {
       discount: json['discount'] as int? ?? 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       reviews: (json['reviews'] as List?)?.cast<Map<String, dynamic>>() ?? [],
+      inStock: (json['in_stock'] as bool?) ?? true,
     );
   }
 }

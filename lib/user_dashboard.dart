@@ -362,16 +362,16 @@ class _UserDashboardState extends State<UserDashboard> {
 
                 const SizedBox(height: 16),
 
-                // Flash Sale Section
+                // Quiz Shortcut Section
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.symmetric(horizontal: 16.0),
                   padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
-                    color: Color(0xFF0066CC).withOpacity(0.1),
+                    color: const Color(0xFF0066CC).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Color(0xFF0066CC).withOpacity(0.3),
+                      color: const Color(0xFF0066CC).withOpacity(0.3),
                     ),
                   ),
                   child: Column(
@@ -379,13 +379,13 @@ class _UserDashboardState extends State<UserDashboard> {
                       Row(
                         children: [
                           const Icon(
-                            Icons.flash_on,
+                            Icons.quiz,
                             color: Color(0xFF0066CC),
                             size: 24,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Super Flash Sale',
+                            'Quick Quiz Challenge',
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
@@ -393,7 +393,7 @@ class _UserDashboardState extends State<UserDashboard> {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Get exclusive deals today only!',
+                        'Earn coins by answering daily quizzes — boost your rewards!',
                         style: TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
@@ -401,7 +401,7 @@ class _UserDashboardState extends State<UserDashboard> {
                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: () => setState(() => _selectedIndex = 1),
+                          onPressed: () => setState(() => _selectedIndex = 3),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF0066CC),
                             foregroundColor: Colors.white,
@@ -410,12 +410,20 @@ class _UserDashboardState extends State<UserDashboard> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
-                            'Shop Now',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.play_arrow, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Start Quiz',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -581,6 +589,10 @@ class _UserDashboardState extends State<UserDashboard> {
       AnimatedProductCatalogPage(
         key: ValueKey('catalog-${_reloadCounters[1]}'),
         username: widget.username,
+        onViewCartRequested: () {
+          setState(() => _selectedIndex = 2);
+          _refreshCoinsAndCart();
+        },
       ), // Index 1 - Shop
       CartPage(
         key: ValueKey('cart-${_reloadCounters[2]}'),

@@ -741,33 +741,6 @@ class _AdminDashboardState extends State<AdminDashboard>
                 ),
                 const SizedBox(height: 24),
 
-                // Voucher Usage Stats
-                if (voucherStats.isNotEmpty) ...[
-                  Text(
-                    '🎫 Voucher Usage',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          _buildVoucherStatRow(
-                            'Vouchers Used',
-                            '${voucherStats['voucher_usage_count']} (${voucherStats['voucher_usage_percentage']}%)',
-                          ),
-                          const Divider(height: 24),
-                          _buildVoucherStatRow(
-                            'Total Discounts Given',
-                            'RM${(voucherStats['total_discounts_given'] as double).toStringAsFixed(0)}',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
 
                 // Recent Orders Section
                 Text(
