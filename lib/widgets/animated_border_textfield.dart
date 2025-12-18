@@ -270,7 +270,10 @@ class _AnimatedBorderTextFieldState extends State<AnimatedBorderTextField>
                     color: _isFocused
                         ? widget.gradientColors[0]
                         : Colors.grey[600],
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
+                  floatingLabelBehavior: FloatingLabelBehavior.auto,
                   hintText: widget.hintText,
                   hintStyle: TextStyle(
                     color: widget.hintColor ?? Colors.grey[400],

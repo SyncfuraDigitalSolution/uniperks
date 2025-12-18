@@ -72,11 +72,13 @@ class _AnimatedProductCatalogPageState extends State<AnimatedProductCatalogPage>
     });
 
     final fetchedProducts = await ProductService.getAllProducts();
-    final fetchedCategories = await ProductService.getCategories();
+    final allCategories = await ProductService.getCategories();
+    // Remove duplicates and ensure 'All' is first
+    final uniqueCategories = ['All', ...allCategories.where((c) => c != 'All')];
 
     setState(() {
       products = fetchedProducts;
-      categories = fetchedCategories;
+      categories = uniqueCategories;
       isLoading = false;
     });
   }

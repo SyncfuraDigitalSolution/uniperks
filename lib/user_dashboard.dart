@@ -608,7 +608,12 @@ class _UserDashboardState extends State<UserDashboard> {
       ), // Index 4 - Vouchers
       KeyedSubtree(
         key: ValueKey('orders-${_reloadCounters[5]}'),
-        child: OrderTrackingPage(username: widget.username),
+        child: OrderTrackingPage(
+          username: widget.username,
+          onStartShopping: () {
+            setState(() => _selectedIndex = 1);
+          },
+        ),
       ), // Index 5 - Orders
     ];
 

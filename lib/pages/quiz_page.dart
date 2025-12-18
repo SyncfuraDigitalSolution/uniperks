@@ -93,12 +93,7 @@ class _QuizPageState extends State<QuizPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Header
-                        Text(
-                          'Today\'s Progress',
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 24),
+                    
 
                         // Daily Progress Card
                         Container(

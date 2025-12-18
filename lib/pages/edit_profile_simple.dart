@@ -3,8 +3,7 @@ import '../services/user_service.dart';
 
 /// Simplified Edit Profile Page
 /// - Loads user data (username, email, full_name, phone, bio, avatar_url)
-/// - Optional avatar upload
-/// - Optional password change
+/// - Optional password change (current, new, confirm)
 /// - Updates via Supabase
 class EditProfileSimplePage extends StatefulWidget {
   final String username;
@@ -20,12 +19,14 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
   late TextEditingController _fullNameController;
   late TextEditingController _phoneController;
   late TextEditingController _bioController;
+  late TextEditingController _currentPasswordController;
   late TextEditingController _passwordController;
+  late TextEditingController _confirmPasswordController;
   late TextEditingController _addressController;
   late TextEditingController _cityController;
   late TextEditingController _postalController;
 
-  String? _avatarUrl; // Display-only avatar URL (no upload on this page)
+  String? _avatarUrl;
   bool _isLoading = true;
   bool _isSaving = false;
   late UserModel _user;
@@ -37,7 +38,9 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
     _fullNameController = TextEditingController();
     _phoneController = TextEditingController();
     _bioController = TextEditingController();
+    _currentPasswordController = TextEditingController();
     _passwordController = TextEditingController();
+    _confirmPasswordController = TextEditingController();
     _addressController = TextEditingController();
     _cityController = TextEditingController();
     _postalController = TextEditingController();
@@ -83,9 +86,9 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
     final fullName = _fullNameController.text.trim();
     final phone = _phoneController.text.trim();
     final bio = _bioController.text.trim();
-    final newPassword = _passwordController.text.isEmpty
-        ? null
-        : _passwordController.text;
+    final currentPassword = _currentPasswordController.text;
+    final newPasswordInput = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
     final addressLine = _addressController.text.trim();
     final city = _cityController.text.trim();
     final postalCode = _postalController.text.trim();
@@ -100,6 +103,58 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
     setState(() => _isSaving = true);
 
     try {
+      // Handle password change if any password field is filled
+      bool passwordChanged = false;
+      final wantsPasswordChange =
+          currentPassword.isNotEmpty ||
+          newPasswordInput.isNotEmpty ||
+          confirmPassword.isNotEmpty;
+
+      if (wantsPasswordChange) {
+        // Require all fields
+        if (currentPassword.isEmpty ||
+            newPasswordInput.isEmpty ||
+            confirmPassword.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please fill all password fields')),
+            );
+          }
+          return;
+        }
+
+        // Confirm match
+        if (newPasswordInput != confirmPassword) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('New password and confirm do not match'),
+              ),
+            );
+          }
+          return;
+        }
+
+        // Attempt change via service
+        final ok = await UserService.changePassword(
+          widget.username,
+          currentPassword,
+          newPasswordInput,
+        );
+        if (!ok) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Current password doesn\'t match'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+        passwordChanged = true;
+      }
+
       // Update profile (avatar unchanged; no upload support here)
       final result = await UserService.updateProfileSimple(
         widget.username,
@@ -107,8 +162,9 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
         newFullName: fullName,
         newPhone: phone,
         newBio: bio,
-        newPassword: newPassword,
-        newAvatarUrl: _avatarUrl, // Keep existing avatar reference
+        // Password already updated via changePassword if requested
+        newPassword: null,
+        newAvatarUrl: _avatarUrl,
         newAddressLine: addressLine,
         newCity: city,
         newPostalCode: postalCode,
@@ -118,12 +174,21 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.message),
+          content: Text(
+            passwordChanged
+                ? 'Password changed. ${result.message}'
+                : result.message,
+          ),
           backgroundColor: result.ok ? Colors.green : Colors.red,
         ),
       );
 
       if (result.ok) {
+        if (passwordChanged) {
+          _currentPasswordController.clear();
+          _passwordController.clear();
+          _confirmPasswordController.clear();
+        }
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -145,7 +210,9 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
     _fullNameController.dispose();
     _phoneController.dispose();
     _bioController.dispose();
+    _currentPasswordController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _addressController.dispose();
     _cityController.dispose();
     _postalController.dispose();
@@ -274,11 +341,48 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
                             ),
                           ),
                           const SizedBox(height: 12),
+
+                          // Current Password
+                          TextField(
+                            controller: _currentPasswordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: 'Current password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.orange.withOpacity(0.3),
+                                ),
+                              ),
+                              focusedBorder: const OutlineInputBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                                borderSide: BorderSide(
+                                  color: Colors.orange,
+                                  width: 2,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // New Password
                           TextField(
                             controller: _passwordController,
                             obscureText: true,
                             decoration: InputDecoration(
-                              hintText: 'New password (optional)',
+                              hintText: 'New password',
                               prefixIcon: const Icon(Icons.lock),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -289,9 +393,46 @@ class _EditProfileSimplePageState extends State<EditProfileSimplePage> {
                                   color: Colors.orange.withOpacity(0.3),
                                 ),
                               ),
-                              focusedBorder: OutlineInputBorder(
+                              focusedBorder: const OutlineInputBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                                borderSide: BorderSide(
+                                  color: Colors.orange,
+                                  width: 2,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Confirm Password
+                          TextField(
+                            controller: _confirmPasswordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: 'Confirm new password',
+                              prefixIcon: const Icon(Icons.lock),
+                              border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.orange.withOpacity(0.3),
+                                ),
+                              ),
+                              focusedBorder: const OutlineInputBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                                borderSide: BorderSide(
                                   color: Colors.orange,
                                   width: 2,
                                 ),
