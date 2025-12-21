@@ -167,8 +167,12 @@ class VoucherService {
         'expires_at': expiresAt.toIso8601String(),
       });
 
-      // Deduct coins
-      await UserCoinsService.spendCoins(username, voucher.coinsRequired);
+      // Deduct coins and log history with source
+      await UserCoinsService.spendCoinsWithSource(
+        username,
+        voucher.coinsRequired,
+        'Voucher redemption: ${voucher.title} (#${voucher.id})',
+      );
 
       // Update cache to reflect new redemption
       final existing = _redemptionCountCache[voucher.id];

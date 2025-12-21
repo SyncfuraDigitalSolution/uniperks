@@ -507,39 +507,36 @@ class _ProductOfTheDayCardState extends State<ProductOfTheDayCard>
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Hero(
-                      tag: 'product_${widget.product.id}',
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: widget.product.imageUrl.isNotEmpty
-                              ? Image.network(
-                                  widget.product.imageUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Center(
-                                      child: Icon(
-                                        Icons.image,
-                                        size: 40,
-                                        color: Colors.grey,
-                                      ),
-                                    );
-                                  },
-                                )
-                              : const Center(
-                                  child: Icon(
-                                    Icons.image,
-                                    size: 40,
-                                    color: Colors.grey,
-                                  ),
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: widget.product.imageUrl.isNotEmpty
+                            ? Image.network(
+                                widget.product.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.image,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.image,
+                                  size: 40,
+                                  color: Colors.grey,
                                 ),
-                        ),
+                              ),
                       ),
                     ),
                   ],

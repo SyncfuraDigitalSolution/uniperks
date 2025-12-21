@@ -93,7 +93,6 @@ class _QuizPageState extends State<QuizPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Header
-                    
 
                         // Daily Progress Card
                         Container(
@@ -811,8 +810,12 @@ class _QuizPageState extends State<QuizPage> {
           widget.username,
           selectedModule!.id,
         );
-        // Add earned coins to user's account
-        await UserCoinsService.addCoins(widget.username, score);
+        // Add earned coins to user's account with descriptive history entry
+        await UserCoinsService.addCoinsWithSource(
+          widget.username,
+          score,
+          'Quiz module: ${selectedModule!.title} (#${selectedModule!.id}) — earned $score coins',
+        );
 
         if (!mounted) return;
         setState(() {

@@ -6,6 +6,7 @@ import 'package:uniperks/pages/cart_page.dart';
 import 'package:uniperks/pages/quiz_page.dart';
 import 'package:uniperks/pages/voucher_page.dart';
 import 'package:uniperks/pages/profile_page.dart';
+import 'package:uniperks/pages/wallet_page.dart';
 import 'package:uniperks/pages/order_tracking_page.dart';
 import 'package:uniperks/services/cart_service.dart';
 import 'package:uniperks/services/user_coins_service.dart';
@@ -137,42 +138,56 @@ class _UserDashboardState extends State<UserDashboard> {
                           future: _coinsFuture,
                           builder: (context, coinsSnapshot) {
                             final coins = coinsSnapshot.data ?? 0;
-                            return Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.amber.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        WalletPage(username: widget.username),
                                   ),
-                                  child: const Icon(
-                                    Icons.monetization_on,
-                                    color: Colors.amber,
-                                    size: 20,
+                                );
+                                _refreshCoinsAndCart();
+                              },
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.monetization_on,
+                                      color: Colors.amber,
+                                      size: 20,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '$coins',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '$coins',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      'Coins',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey[600],
+                                      Text(
+                                        'Coins',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey[600],
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                ],
+                              ),
                             );
                           },
                         ),
@@ -235,8 +250,14 @@ class _UserDashboardState extends State<UserDashboard> {
                 // Hero Banner Section - Modern Clean Design
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF0066CC), Color(0xFF0052A3)],
@@ -259,8 +280,8 @@ class _UserDashboardState extends State<UserDashboard> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
+                              horizontal: 10,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
@@ -271,14 +292,14 @@ class _UserDashboardState extends State<UserDashboard> {
                                 Icon(
                                   Icons.local_fire_department,
                                   color: Colors.white,
-                                  size: 16,
+                                  size: 14,
                                 ),
                                 SizedBox(width: 4),
                                 Text(
                                   'New Collection',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -287,33 +308,33 @@ class _UserDashboardState extends State<UserDashboard> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       const Text(
                         'UPSI\nMerchandise',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 32,
+                          fontSize: 26,
                           fontWeight: FontWeight.bold,
                           height: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         'Grab yours now and show your pride',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       ElevatedButton(
                         onPressed: () => setState(() => _selectedIndex = 1),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0066CC),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
+                            horizontal: 20,
+                            vertical: 10,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -326,12 +347,12 @@ class _UserDashboardState extends State<UserDashboard> {
                             Text(
                               'Shop Now',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward, size: 18),
+                            SizedBox(width: 6),
+                            Icon(Icons.arrow_forward, size: 16),
                           ],
                         ),
                       ),
@@ -339,7 +360,7 @@ class _UserDashboardState extends State<UserDashboard> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Popular Products
                 Padding(
