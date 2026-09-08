@@ -8,8 +8,10 @@ import 'package:uniperks/pages/voucher_page.dart';
 import 'package:uniperks/pages/profile_page.dart';
 import 'package:uniperks/pages/wallet_page.dart';
 import 'package:uniperks/pages/order_tracking_page.dart';
+import 'package:uniperks/pages/notifications_page.dart';
 import 'package:uniperks/services/cart_service.dart';
 import 'package:uniperks/services/user_coins_service.dart';
+import 'package:uniperks/services/order_notification_service.dart';
 import 'package:uniperks/services/product_service.dart';
 import 'package:uniperks/services/user_service.dart';
 import 'package:uniperks/models/product.dart';
@@ -76,7 +78,7 @@ class _UserDashboardState extends State<UserDashboard> {
     return allProducts;
   }
 
-  Widget _buildHomePage() {
+    Widget _buildHomePage() {
     // Lazy-load coins and cart on first access to home page
     _ensureCoinsCartLoaded();
 
@@ -97,363 +99,43 @@ class _UserDashboardState extends State<UserDashboard> {
           onRefresh: _onRefreshHome,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Compact Coins & Cart Info Bar at Top
-                Container(
-                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF0066CC).withOpacity(0.08),
-                        const Color(0xFF0066CC).withOpacity(0.05),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFF0066CC).withOpacity(0.15),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      // Coins Display
-                      Expanded(
-                        child: FutureBuilder<int>(
-                          future: _coinsFuture,
-                          builder: (context, coinsSnapshot) {
-                            final coins = coinsSnapshot.data ?? 0;
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        WalletPage(username: widget.username),
-                                  ),
-                                );
-                                _refreshCoinsAndCart();
-                              },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(
-                                      Icons.monetization_on,
-                                      color: Colors.amber,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '$coins',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Coins',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      // Divider
-                      Container(height: 40, width: 1, color: Colors.grey[200]),
-                      // Cart Display
-                      Expanded(
-                        child: FutureBuilder<int>(
-                          future: _cartFuture,
-                          builder: (context, cartSnapshot) {
-                            final cartCount = cartSnapshot.data ?? 0;
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      '$cartCount',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Items in Cart',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF0066CC,
-                                    ).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.shopping_cart_outlined,
-                                    color: Color(0xFF0066CC),
-                                    size: 20,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Hero Banner Section - Modern Clean Design
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0066CC), Color(0xFF0052A3)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF0066CC).withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+            padding: const EdgeInsets.only(bottom: 32),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1024), // Web friendly width
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTopStatsBar(),
+                    _buildHeroBanner(),
+                    _buildCategoryQuickLinks(),
+                    
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.local_fire_department,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  'New Collection',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'UPSI\nMerchandise',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Grab yours now and show your pride',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: () => setState(() => _selectedIndex = 1),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF0066CC),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Shop Now',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(width: 6),
-                            Icon(Icons.arrow_forward, size: 16),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Popular Products
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Products',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 500,
-                  child: _ProductSlideshow(
-                    products: filteredProducts,
-                    itemBuilder: _buildProductCard,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Quiz Shortcut Section
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                  padding: const EdgeInsets.all(20.0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0066CC).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFF0066CC).withOpacity(0.3),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.quiz,
-                            color: Color(0xFF0066CC),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
                           Text(
-                            'Quick Quiz Challenge',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Earn coins by answering daily quizzes — boost your rewards!',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: () => setState(() => _selectedIndex = 3),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0066CC),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            'Just For You',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.play_arrow, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Start Quiz',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                          TextButton(
+                            onPressed: () => setState(() => _selectedIndex = 1),
+                            child: const Text('See All', style: TextStyle(color: Color(0xFF0066CC))),
+                          )
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    
+                    _buildProductGrid(filteredProducts),
+                    
+                    const SizedBox(height: 16),
+                    _buildQuizBanner(),
+                  ],
                 ),
-
-                const SizedBox(height: 32),
-              ],
+              ),
             ),
           ),
         );
@@ -461,57 +143,347 @@ class _UserDashboardState extends State<UserDashboard> {
     );
   }
 
-  Future<void> _onRefreshHome() async {
-    // Re-fetch header counts and trigger a rebuild so FutureBuilder reloads products
-    _refreshCoinsAndCart();
-    await ProductService.getAllProducts();
-    if (mounted) setState(() {});
-  }
-
-  Widget _buildProductCard(Product product) {
+  Widget _buildTopStatsBar() {
     return Container(
-      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF0066CC).withOpacity(0.08),
+            const Color(0xFF0066CC).withOpacity(0.05),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+        border: Border.all(
+          color: const Color(0xFF0066CC).withOpacity(0.15),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: FutureBuilder<int>(
+              future: _coinsFuture,
+              builder: (context, coinsSnapshot) {
+                final coins = coinsSnapshot.data ?? 0;
+                return InkWell(
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => WalletPage(username: widget.username)),
+                    );
+                    _refreshCoinsAndCart();
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                        child: const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('$coins', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text('Coins', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          Container(height: 40, width: 1, color: Colors.grey[200]),
+          Expanded(
+            child: FutureBuilder<int>(
+              future: _cartFuture,
+              builder: (context, cartSnapshot) {
+                final cartCount = cartSnapshot.data ?? 0;
+                return InkWell(
+                  onTap: () {
+                    setState(() => _selectedIndex = 2);
+                    _refreshCoinsAndCart();
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('$cartCount', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text('Items in Cart', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                        ],
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: const Color(0xFF0066CC).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                        child: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF0066CC), size: 20),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  Widget _buildHeroBanner() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0066CC), Color(0xFF004488)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0066CC).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
         children: [
-          Expanded(
-            flex: 2,
-            child: Container(
-              width: double.infinity,
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: const Color(0xFFF5F7FA),
+          Positioned(
+            right: -20,
+            bottom: -20,
+            child: Icon(
+              Icons.shopping_bag_outlined,
+              size: 150,
+              color: Colors.white.withOpacity(0.1),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_fire_department, color: Colors.amber, size: 14),
+                      SizedBox(width: 4),
+                      Text('TRENDING MERCH', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'UniPerks Exclusive',
+                  style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, height: 1.2),
+                ),
+                const SizedBox(height: 4),
+                const Text('Get official merchandise now.', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () => setState(() => _selectedIndex = 1),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF0066CC),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Shop Now', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryQuickLinks() {
+    final List<Map<String, dynamic>> links = [
+      {'icon': Icons.grid_view, 'label': 'All', 'index': 1},
+      {'icon': Icons.card_giftcard, 'label': 'Vouchers', 'index': 4},
+      {'icon': Icons.quiz, 'label': 'Quiz', 'index': 3},
+      {'icon': Icons.receipt_long, 'label': 'Orders', 'index': 5},
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: links.map((link) {
+          return InkWell(
+            onTap: () => setState(() => _selectedIndex = link['index']),
+            borderRadius: BorderRadius.circular(12),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                    ],
+                  ),
+                  child: Icon(link['icon'], color: const Color(0xFF0066CC), size: 24),
+                ),
+                const SizedBox(height: 8),
+                Text(link['label'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87)),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildProductGrid(List<Product> products) {
+    if (products.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(32.0),
+        child: Center(child: Text('No products available.')),
+      );
+    }
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive grid
+        int crossAxisCount = 2;
+        if (constraints.maxWidth > 800) {
+          crossAxisCount = 4;
+        } else if (constraints.maxWidth > 600) {
+          crossAxisCount = 3;
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: 0.65,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: products.length > 8 ? 8 : products.length, // Show up to 8 items on home
+          itemBuilder: (context, index) => _buildProductCard(products[index]),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuizBanner() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0066CC).withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF0066CC).withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bolt, color: Colors.amber, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'Daily Quiz Challenge',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Earn coins by answering daily quizzes — boost your rewards!',
+            style: TextStyle(color: Colors.black54),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => setState(() => _selectedIndex = 3),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0066CC),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Start Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductCard(Product product) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailPage(
+              product: product,
+              username: widget.username,
+            ),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Section
+            Expanded(
+              flex: 3,
               child: Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      product.imageUrl,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(
-                            Icons.image_outlined,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                        );
-                      },
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                      color: Color(0xFFF5F7FA),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: Image.network(
+                        product.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Center(
+                          child: Icon(Icons.image_outlined, size: 32, color: Colors.grey),
+                        ),
+                      ),
                     ),
                   ),
                   if (product.discount > 0)
@@ -519,83 +491,63 @@ class _UserDashboardState extends State<UserDashboard> {
                       top: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.red,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.red.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           '${product.discount}% OFF',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
                 ],
               ),
             ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '\RM${product.discountedPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0066CC),
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      if (product.discount > 0)
+            // Info Section
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black87),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (product.discount > 0)
+                          Text(
+                            'RM${product.price.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              decoration: TextDecoration.lineThrough,
+                              color: Colors.grey[500],
+                            ),
+                          ),
                         Text(
-                          '\RM${product.price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            decoration: TextDecoration.lineThrough,
-                            color: Colors.grey[500],
+                          'RM${product.discountedPrice.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0066CC),
                           ),
                         ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -680,49 +632,55 @@ class _UserDashboardState extends State<UserDashboard> {
             tooltip: 'Refresh',
             onPressed: _reloadCurrentPage,
           ),
-          // Cart badge
+          // Notifications badge
           Stack(
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_cart, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    _selectedIndex = 2; // Navigate to cart (index 2)
-                  });
+                icon: const Icon(Icons.notifications, color: Colors.white),
+                tooltip: 'Notifications',
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          NotificationsPage(username: widget.username),
+                    ),
+                  );
+                  setState(() {});
                 },
               ),
-              if (true) // Badge will be updated via FutureBuilder in CartPage
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: FutureBuilder<int>(
-                    future: _cartFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData && snapshot.data! > 0) {
-                        return Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            '${snapshot.data}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
+              Positioned(
+                right: 8,
+                top: 8,
+                child: FutureBuilder<int>(
+                  future: OrderNotificationService.getUnreadCount(
+                    widget.username,
                   ),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data ?? 0;
+                    if (count <= 0) return const SizedBox.shrink();
+                    return Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  },
                 ),
+              ),
             ],
           ),
           // Profile icon
